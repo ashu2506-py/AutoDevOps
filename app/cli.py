@@ -3,6 +3,8 @@ import typer
 from app.parser import load_yaml, ConfigError
 from app.validator import validate_config
 from app.generator import CodeGenerator
+from pathlib import Path
+from app.executor import Executor
 
 app = typer.Typer(
     name="autodevops",
@@ -101,6 +103,148 @@ def generate(
         typer.echo(
             f"Ansible generated successfully: {ansible_file}"
         )
+
+    except ConfigError as error:
+
+        typer.echo(
+            f"ERROR: {error}",
+            err=True
+        )
+@app.command()
+def plan(
+    config: str = typer.Argument(
+        ...,
+        help="Path to the YAML configuration file"
+    )
+):
+    """Generate Terraform and run a safe Terraform plan."""
+
+    try:
+        data = load_yaml(config)
+
+        result = validate_config(data)
+
+        if not result.valid:
+
+            typer.echo(
+                "Configuration is invalid:",
+                err=True
+            )
+
+            for error in result.errors:
+                typer.echo(
+                    f"  - {error}",
+                    err=True
+                )
+
+            raise typer.Exit(code=1)
+
+        generator = CodeGenerator()
+
+        terraform_file = generator.generate_terraform(
+            result.config
+        )
+
+        terraform_directory = terraform_file.parent
+
+        typer.echo(
+            f"Terraform generated: {terraform_file}"
+        )
+
+        executor = Executor()
+
+        init_result = executor.terraform_init(
+            terraform_directory,
+            dry_run=True
+        )
+
+        plan_result = executor.terraform_plan(
+            terraform_directory,
+            dry_run=True
+        )
+
+        typer.echo("")
+        typer.echo("Terraform Plan")
+        typer.echo("----------------")
+
+        typer.echo(init_result.stdout)
+        typer.echo(plan_result.stdout)
+
+        typer.echo("")
+        typer.echo("Plan completed in DRY-RUN mode.")
+
+    except ConfigError as error:
+
+        typer.echo(
+            f"ERROR: {error}",
+            err=True
+        )
+
+        raise typer.Exit(code=1)
+        raise typer.Exit(code=1)
+
+@app.command()
+def deploy(
+    config: str = typer.Argument(
+        ...,
+        help="Path to the YAML configuration file"
+    )
+):
+    """Generate infrastructure and perform a safe deployment simulation."""
+
+    try:
+        data = load_yaml(config)
+
+        result = validate_config(data)
+
+        if not result.valid:
+
+            typer.echo(
+                "Configuration is invalid:",
+                err=True
+            )
+
+            for error in result.errors:
+                typer.echo(
+                    f"  - {error}",
+                    err=True
+                )
+
+            raise typer.Exit(code=1)
+
+        generator = CodeGenerator()
+
+        terraform_file = generator.generate_terraform(
+            result.config
+        )
+
+        terraform_directory = terraform_file.parent
+
+        typer.echo(
+            f"Terraform generated: {terraform_file}"
+        )
+
+        executor = Executor()
+
+        init_result = executor.terraform_init(
+            terraform_directory,
+            dry_run=True
+        )
+
+        apply_result = executor.terraform_apply(
+            terraform_directory,
+            dry_run=True
+        )
+
+        typer.echo("")
+        typer.echo("Deployment")
+        typer.echo("----------------")
+
+        typer.echo(init_result.stdout)
+        typer.echo(apply_result.stdout)
+
+        typer.echo("")
+        typer.echo("Deployment simulation completed safely.")
 
     except ConfigError as error:
 
