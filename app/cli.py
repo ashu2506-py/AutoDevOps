@@ -5,7 +5,8 @@ from app.validator import validate_config
 from app.generator import CodeGenerator
 from pathlib import Path
 from app.executor import Executor
-
+from app.logger import DeploymentLogger
+from app.state import StateManager
 app = typer.Typer(
     name="autodevops",
     help="AutoDevOps - Infrastructure as Code Generator & Cloud Deployer"
@@ -252,7 +253,33 @@ def deploy(
             f"ERROR: {error}",
             err=True
         )
+@app.command()
+def logs():
+    """Show deployment logs."""
 
-        raise typer.Exit(code=1)
+    logger = DeploymentLogger()
+
+    typer.echo(
+        logger.read()
+    )
+    raise typer.Exit(code=1)
+
+@app.command()
+def status():
+    """Show the latest AutoDevOps deployment state."""
+
+    state_manager = StateManager()
+
+    state = state_manager.load()
+
+    if not state:
+        typer.echo("No deployment state found.")
+        return
+
+    typer.echo("AutoDevOps Status")
+    typer.echo("-----------------")
+
+    for key, value in state.items():
+        typer.echo(f"{key}: {value}")
 if __name__ == "__main__":
     app()

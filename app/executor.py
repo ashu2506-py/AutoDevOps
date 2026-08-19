@@ -2,6 +2,8 @@ import shutil
 import subprocess
 from dataclasses import dataclass
 
+from app.logger import DeploymentLogger
+
 
 @dataclass
 class CommandResult:
@@ -13,6 +15,10 @@ class CommandResult:
 
 
 class Executor:
+
+    def __init__(self, logger=None):
+
+        self.logger = logger or DeploymentLogger()
 
     def run(
         self,
@@ -27,25 +33,47 @@ class Executor:
 
         print(f"Command: {command_text}")
 
-        # Safe mode
+        self.logger.write(
+            f"COMMAND: {command_text}"
+        )
+
+        # -------------------------
+        # DRY RUN
+        # -------------------------
+
         if dry_run:
 
-            print("DRY-RUN: command was not executed.")
+            message = (
+                "DRY-RUN: command was not executed."
+            )
+
+            print(message)
+
+            self.logger.write(message)
 
             return CommandResult(
                 command=command,
                 returncode=0,
-                stdout="DRY-RUN: command was not executed.",
+                stdout=message,
                 stderr="",
                 skipped=True
             )
 
-        # Check whether command exists
+        # -------------------------
+        # COMMAND CHECK
+        # -------------------------
+
         if shutil.which(command[0]) is None:
 
-            error = f"Command not found: {command[0]}"
+            error = (
+                f"Command not found: {command[0]}"
+            )
 
             print(error)
+
+            self.logger.write(
+                f"ERROR: {error}"
+            )
 
             return CommandResult(
                 command=command,
@@ -53,6 +81,10 @@ class Executor:
                 stdout="",
                 stderr=error
             )
+
+        # -------------------------
+        # EXECUTE COMMAND
+        # -------------------------
 
         try:
 
@@ -65,6 +97,22 @@ class Executor:
                 check=False
             )
 
+            if result.stdout:
+
+                self.logger.write(
+                    result.stdout.strip()
+                )
+
+            if result.stderr:
+
+                self.logger.write(
+                    result.stderr.strip()
+                )
+
+            self.logger.write(
+                f"RETURN CODE: {result.returncode}"
+            )
+
             return CommandResult(
                 command=command,
                 returncode=result.returncode,
@@ -74,11 +122,17 @@ class Executor:
 
         except subprocess.TimeoutExpired:
 
+            error = "Command timed out."
+
+            self.logger.write(
+                f"ERROR: {error}"
+            )
+
             return CommandResult(
                 command=command,
                 returncode=124,
                 stdout="",
-                stderr="Command timed out."
+                stderr=error
             )
 
     def terraform_init(
