@@ -296,8 +296,6 @@ def logs():
     typer.echo(
         logger.read()
     )
-    raise typer.Exit(code=1)
-
 @app.command()
 def status():
     """Show the latest AutoDevOps deployment state."""
