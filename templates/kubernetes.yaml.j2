@@ -1,0 +1,35 @@
+{% for name, resource in resources.compute %}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ name | replace("_", "-") }}
+  labels:
+    app: {{ name | replace("_", "-") }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ name | replace("_", "-") }}
+  template:
+    metadata:
+      labels:
+        app: {{ name | replace("_", "-") }}
+    spec:
+      containers:
+        - name: {{ name | replace("_", "-") }}
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ name | replace("_", "-") }}
+spec:
+  selector:
+    app: {{ name | replace("_", "-") }}
+  ports:
+    - port: 80
+      targetPort: 80
+---
+{% endfor %}

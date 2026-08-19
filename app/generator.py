@@ -77,3 +77,33 @@ class CodeGenerator:
             )
 
             return output_file
+    
+    def generate_kubernetes(
+        self,
+        config: InfrastructureConfig
+    ):
+
+        template = self.env.get_template(
+            "kubernetes.yaml.j2"
+        )
+
+        output_file = (
+            self.output_dir /
+            "kubernetes" /
+            "manifests.yaml"
+        )
+
+        output_file.parent.mkdir(
+            parents=True,
+            exist_ok=True
+        )
+
+        output_file.write_text(
+            template.render(
+                config=config,
+                resources=config.typed_resources()
+            ),
+            encoding="utf-8"
+        )
+
+        return output_file

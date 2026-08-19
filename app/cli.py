@@ -96,6 +96,9 @@ def generate(
         ansible_file = generator.generate_ansible(
             result.config
         )
+        kubernetes_file = generator.generate_kubernetes(
+            result.config
+        )
 
         typer.echo(
             f"Terraform generated successfully: {terraform_file}"
@@ -103,6 +106,10 @@ def generate(
 
         typer.echo(
             f"Ansible generated successfully: {ansible_file}"
+        )
+        
+        typer.echo(
+            f"Kubernetes generated successfully: {kubernetes_file}"
         )
 
     except ConfigError as error:
@@ -164,6 +171,17 @@ def plan(
             dry_run=True
         )
 
+        # Save state
+        state_manager = StateManager()
+
+        state_manager.save(
+            project=result.config.project.name,
+            operation="plan",
+            status="dry-run",
+            generated_file=str(terraform_file),
+            return_code=plan_result.returncode
+        )
+
         typer.echo("")
         typer.echo("Terraform Plan")
         typer.echo("----------------")
@@ -173,6 +191,7 @@ def plan(
 
         typer.echo("")
         typer.echo("Plan completed in DRY-RUN mode.")
+        typer.echo("State saved successfully.")
 
     except ConfigError as error:
 
@@ -182,8 +201,6 @@ def plan(
         )
 
         raise typer.Exit(code=1)
-        raise typer.Exit(code=1)
-
 @app.command()
 def deploy(
     config: str = typer.Argument(
@@ -237,6 +254,17 @@ def deploy(
             dry_run=True
         )
 
+        # Save deployment state
+        state_manager = StateManager()
+
+        state_manager.save(
+            project=result.config.project.name,
+            operation="deploy",
+            status="dry-run",
+            generated_file=str(terraform_file),
+            return_code=apply_result.returncode
+        )
+
         typer.echo("")
         typer.echo("Deployment")
         typer.echo("----------------")
@@ -245,7 +273,10 @@ def deploy(
         typer.echo(apply_result.stdout)
 
         typer.echo("")
-        typer.echo("Deployment simulation completed safely.")
+        typer.echo(
+            "Deployment simulation completed safely."
+        )
+        typer.echo("State saved successfully.")
 
     except ConfigError as error:
 
@@ -253,6 +284,8 @@ def deploy(
             f"ERROR: {error}",
             err=True
         )
+
+        raise typer.Exit(code=1)
 @app.command()
 def logs():
     """Show deployment logs."""
