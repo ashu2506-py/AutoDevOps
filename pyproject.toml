@@ -1,0 +1,45 @@
+[build-system]
+requires = [
+    "setuptools>=68",
+    "wheel"
+]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "autodevops"
+version = "1.0.0"
+description = "Infrastructure as Code Generator and Cloud Deployer"
+readme = "README.md"
+requires-python = ">=3.10"
+
+dependencies = [
+    "typer",
+    "PyYAML",
+    "Jinja2",
+    "pydantic"
+]
+
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov"
+]
+
+
+[project.scripts]
+autodevops = "app.cli:app"
+
+
+[tool.setuptools.packages.find]
+include = [
+    "app*",
+    "plugins*"
+]
+
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests"
+]

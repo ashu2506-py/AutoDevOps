@@ -1,5 +1,5 @@
 import typer
-
+from plugins import create_default_registry
 from app.parser import load_yaml, ConfigError
 from app.validator import validate_config
 from app.generator import CodeGenerator
@@ -386,7 +386,21 @@ def estimate(
             f"ERROR: {error}",
             err=True
         )
-
         raise typer.Exit(code=1)
+    
+@app.command()
+def plugins():
+    """List available AutoDevOps plugins."""
+
+    registry = create_default_registry()
+
+    typer.echo("Available Plugins")
+    typer.echo("-----------------")
+
+    for plugin in registry.all():
+
+        typer.echo(
+            f"{plugin.name}: {plugin.description}"
+        )
 if __name__ == "__main__":
     app()
