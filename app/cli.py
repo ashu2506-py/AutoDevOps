@@ -86,12 +86,20 @@ def generate(
 
         generator = CodeGenerator()
 
-        output_file = generator.generate_terraform(
+        terraform_file = generator.generate_terraform(
+            result.config
+        )
+
+        ansible_file = generator.generate_ansible(
             result.config
         )
 
         typer.echo(
-            f"Terraform generated successfully: {output_file}"
+            f"Terraform generated successfully: {terraform_file}"
+        )
+
+        typer.echo(
+            f"Ansible generated successfully: {ansible_file}"
         )
 
     except ConfigError as error:

@@ -1,0 +1,28 @@
+---
+- name: AutoDevOps generated playbook
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Display deployment information
+      ansible.builtin.debug:
+        msg: "Deploying {{ config.project.name }} in {{ config.project.region }}"
+
+{% for name, resource in resources.compute %}
+    - name: Configure compute resource {{ name }}
+      ansible.builtin.debug:
+        msg: "Compute {{ name }} => {{ resource.instance_type }}"
+{% endfor %}
+
+{% for name, resource in resources.database %}
+    - name: Configure database resource {{ name }}
+      ansible.builtin.debug:
+        msg: "Database {{ name }} => {{ resource.engine }} {{ resource.version }}"
+{% endfor %}
+
+{% for name, resource in resources.network %}
+    - name: Configure network resource {{ name }}
+      ansible.builtin.debug:
+        msg: "Network {{ name }} => {{ resource.cidr }}"
+{% endfor %}
