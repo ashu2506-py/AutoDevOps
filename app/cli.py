@@ -7,6 +7,7 @@ from pathlib import Path
 from app.executor import Executor
 from app.logger import DeploymentLogger
 from app.state import StateManager
+from app.cost import estimate_monthly_cost
 app = typer.Typer(
     name="autodevops",
     help="AutoDevOps - Infrastructure as Code Generator & Cloud Deployer"
@@ -314,5 +315,80 @@ def status():
 
     for key, value in state.items():
         typer.echo(f"{key}: {value}")
+        
+@app.command()
+def estimate(
+    config: str = typer.Argument(
+        ...,
+        help="Path to the YAML configuration file"
+    )
+):
+    """Estimate monthly infrastructure cost."""
+
+    try:
+
+        data = load_yaml(config)
+
+        result = validate_config(data)
+
+        if not result.valid:
+
+            typer.echo(
+                "Configuration is invalid:",
+                err=True
+            )
+
+            for error in result.errors:
+
+                typer.echo(
+                    f"  - {error}",
+                    err=True
+                )
+
+            raise typer.Exit(code=1)
+
+        total, details = estimate_monthly_cost(
+            result.config
+        )
+
+        typer.echo(
+            "Estimated Monthly Cost"
+        )
+
+        typer.echo(
+            "-----------------------"
+        )
+
+        for name, cost in details:
+
+            typer.echo(
+                f"{name}: ${cost:.2f}/month"
+            )
+
+        typer.echo(
+            "-----------------------"
+        )
+
+        typer.echo(
+            f"Estimated Total: ${total:.2f}/month"
+        )
+
+        typer.echo(
+            ""
+        )
+
+        typer.echo(
+            "Note: This is a demonstration estimate, "
+            "not live cloud pricing."
+        )
+
+    except ConfigError as error:
+
+        typer.echo(
+            f"ERROR: {error}",
+            err=True
+        )
+
+        raise typer.Exit(code=1)
 if __name__ == "__main__":
     app()
