@@ -1,0 +1,18 @@
+project:
+  name: auto-web-app
+  provider: aws
+  region: us-east-1
+
+resources:
+  web_server:
+    type: compute
+    instance_type: t2.micro
+
+  database:
+    type: database
+    engine: postgres
+    version: "15"
+
+  main_network:
+    type: network
+    cidr: 10.0.0.0/16
